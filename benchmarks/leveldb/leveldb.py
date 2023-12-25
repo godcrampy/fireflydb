@@ -24,7 +24,7 @@ def get_random_bytes_of_length(length):
 
 def save_kv_pair_and_get_time_mus(k, v):
     start_time = datetime.now()
-    db.put(k, v)
+    db.put(k, v, sync=True)
     return (datetime.now() - start_time).microseconds
 
 
@@ -35,8 +35,7 @@ def get_kv_pair_and_get_time_mus(k):
 
 
 # Benchmark writes
-print()
-print("Starting writes")
+print("\nStarting writes...")
 
 times = []
 keys = []
@@ -47,13 +46,13 @@ for i in range(ITERATIONS):
     keys.append(key)
     times.append(save_kv_pair_and_get_time_mus(key, value))
 
-print("Average time to save a key-value pair: " + str(sum(times) / len(times)) + " mus")
-print("Total time: " + str(datetime.now() - startTime))
-print("P90 latency: " + str(sorted(times)[int(len(times) * 0.9)]) + " mus")
+print("\nWrite Test Results:")
+print("  Average write latency: " + str(sum(times) / len(times)) + " mus")
+print("  P90 write latency: " + str(sorted(times)[int(len(times) * 0.9)]) + " mus")
+print("  Total time: " + str(datetime.now() - startTime))
 
 # Benchmark reads
-print()
-print("Starting reads")
+print("\nStarting reads...")
 times = []
 
 for i in range(ITERATIONS):
@@ -61,13 +60,13 @@ for i in range(ITERATIONS):
 
     times.append(get_kv_pair_and_get_time_mus(key))
 
-print("Average time to read a key-value pair: " + str(sum(times) / len(times)) + " mus")
-print("Total time: " + str(datetime.now() - startTime))
-print("P90 latency: " + str(sorted(times)[int(len(times) * 0.9)]) + " mus")
+print("\nRead Test Results:")
+print("  Average read latency: " + str(sum(times) / len(times)) + " mus")
+print("  P90 read latency: " + str(sorted(times)[int(len(times) * 0.9)]) + " mus")
+print("  Total time: " + str(datetime.now() - startTime))
 
 # Benchmark reads and writes
-print()
-print("Starting reads and writes")
+print("\nStarting reads and writes...")
 read_times = []
 write_times = []
 
@@ -81,11 +80,11 @@ for i in range(ITERATIONS):
     key = random.choice(keys)
     read_times.append(get_kv_pair_and_get_time_mus(key))
 
-print("Average time to write a key-value pair: " + str(sum(write_times) / len(write_times)) + " mus")
-print("Average time to read a key-value pair: " + str(sum(read_times) / len(read_times)) + " mus")
-print("Total time: " + str(datetime.now() - startTime))
-print("P90 latency to write: " + str(sorted(write_times)[int(len(write_times) * 0.9)]) + " mus")
-print("P90 latency to read: " + str(sorted(read_times)[int(len(read_times) * 0.9)]) + " mus")
+print("\nRead and Write Test Results:")
+print("  Average write latency: " + str(sum(write_times) / len(write_times)) + " mus")
+print("  Average read latency: " + str(sum(read_times) / len(read_times)) + " mus")
+print("  P90 write latency: " + str(sorted(write_times)[int(len(write_times) * 0.9)]) + " mus")
+print("  P90 read latency: " + str(sorted(read_times)[int(len(read_times) * 0.9)]) + " mus")
+print("  Total time: " + str(datetime.now() - startTime))
 
-print()
-print("Time to run: " + str(datetime.now() - startTime))
+print("\n Total time to run tests: " + str(datetime.now() - startTime))
