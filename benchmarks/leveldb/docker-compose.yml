@@ -1,0 +1,11 @@
+version: '3'
+services:
+  fireflydb-benchmark-leveldb:
+    image: fireflydb-benchmark-leveldb
+    env_file:
+      - ./.env
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: '1G'
