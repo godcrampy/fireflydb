@@ -1,0 +1,11 @@
+version: '3'
+services:
+  fireflydb-benchmark-hashmap:
+    image: fireflydb-benchmark-hashmap
+    env_file:
+      - ./.env
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: '1G'
