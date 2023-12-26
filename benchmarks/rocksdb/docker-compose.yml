@@ -1,0 +1,11 @@
+version: '3'
+services:
+  fireflydb-benchmark-rocksdb:
+    image: fireflydb-benchmark-rocksdb
+    env_file:
+      - ./.env
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: '1G'
