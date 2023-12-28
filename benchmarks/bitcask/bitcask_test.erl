@@ -73,7 +73,7 @@ read_values(DB, Keys, N, Durations) when N > 0 ->
 
 
 % Helper function for the read and write alternate test
-read_write_alternate(_, 0, ReadLatencies, WriteLatencies ,Keys) ->
+read_write_alternate(_, 0, ReadLatencies, WriteLatencies, Keys) ->
   {ReadLatencies, WriteLatencies, Keys};
 read_write_alternate(DB, N, ReadLatencies, WriteLatencies, Keys) when N > 0 ->
   % Write operation

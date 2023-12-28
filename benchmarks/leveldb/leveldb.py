@@ -1,8 +1,7 @@
 import os
+import plyvel
 import random
 from datetime import datetime
-
-import plyvel
 
 db = plyvel.DB('/tmp/testdb/', create_if_missing=True)
 startTime = datetime.now()
