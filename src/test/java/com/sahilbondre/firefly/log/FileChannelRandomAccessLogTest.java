@@ -6,26 +6,28 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class FileChannelRandomAccessLogTest {
 
-    private static final String TEST_FILE_NAME = "test.log";
-    private static final String TEST_FILE_PATH = "src/test/resources/" + TEST_FILE_NAME;
+    private static final String TEST_FILE_NAME = "src/test/resources/test.log";
+    private static final Path TEST_FILE_PATH = Paths.get(TEST_FILE_NAME);
     private FileChannelRandomAccessLog randomAccessLog;
 
     @BeforeEach
     void setUp() throws IOException {
-        Files.createFile(Paths.get(TEST_FILE_PATH));
-        randomAccessLog = new FileChannelRandomAccessLog(TEST_FILE_PATH);
+        Files.deleteIfExists(TEST_FILE_PATH);
+        Files.createFile(TEST_FILE_PATH);
+        randomAccessLog = new FileChannelRandomAccessLog(TEST_FILE_NAME);
     }
 
     @AfterEach
     void tearDown() throws IOException {
         randomAccessLog.close();
-        Files.deleteIfExists(Paths.get(TEST_FILE_PATH));
+        Files.deleteIfExists(TEST_FILE_PATH);
     }
 
     @Test
@@ -63,7 +65,7 @@ class FileChannelRandomAccessLogTest {
         String filePath = randomAccessLog.getFilePath();
 
         // Then
-        assertEquals(TEST_FILE_PATH, filePath);
+        assertEquals(TEST_FILE_NAME, filePath);
     }
 
     @Test
@@ -116,7 +118,7 @@ class FileChannelRandomAccessLogTest {
         randomAccessLog.close();
 
         // Then
-        assertTrue(Files.exists(Paths.get(TEST_FILE_PATH)));
+        assertTrue(Files.exists(TEST_FILE_PATH));
         assertThrows(IOException.class, () -> randomAccessLog.append("NewContent".getBytes()));
     }
 }
