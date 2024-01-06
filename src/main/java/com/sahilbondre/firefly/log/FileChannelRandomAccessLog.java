@@ -1,6 +1,7 @@
 package com.sahilbondre.firefly.log;
 
 import com.sahilbondre.firefly.filetable.FilePointer;
+import com.sahilbondre.firefly.model.Segment;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -49,6 +50,46 @@ public class FileChannelRandomAccessLog implements RandomAccessLog {
         ByteBuffer buffer = ByteBuffer.allocate((int) length);
         fileChannel.read(buffer);
         return buffer.array();
+    }
+
+    @Override
+    public Segment readSegment(long offset) throws IOException, InvalidRangeException {
+        long fileSize = fileChannel.size();
+
+        if (offset < 0 || offset >= fileSize) {
+            throw new InvalidRangeException("Invalid offset");
+        }
+
+        // Read Key Size
+        byte[] keySizeBytes = new byte[Segment.KEY_SIZE_LENGTH];
+        fileChannel.read(ByteBuffer.wrap(keySizeBytes), offset + Segment.KEY_SIZE_LENGTH);
+
+        // Read Value Size
+        byte[] valueSizeBytes = new byte[Segment.VALUE_SIZE_LENGTH];
+        fileChannel.read(ByteBuffer.wrap(valueSizeBytes),
+            offset + Segment.KEY_SIZE_LENGTH + Segment.VALUE_SIZE_LENGTH);
+
+        // Total Size
+        int totalSize = Segment.CRC_LENGTH + Segment.KEY_SIZE_LENGTH +
+            Segment.VALUE_SIZE_LENGTH + byteArrayToInt(keySizeBytes) + byteArrayToInt(valueSizeBytes);
+
+        // Read entire segment
+        byte[] segmentBytes = new byte[totalSize];
+        fileChannel.read(ByteBuffer.wrap(segmentBytes), offset);
+
+
+        Segment segment = Segment.fromByteArray(segmentBytes);
+
+        // Validate CRC
+        if (!segment.isSegmentValid()) {
+            throw new InvalidRangeException("Segment is invalid");
+        }
+
+        return segment;
+    }
+
+    private int byteArrayToInt(byte[] bytes) {
+        return (bytes[0] << 8) | (bytes[1] & 0xFF);
     }
 
     public void close() throws IOException {
