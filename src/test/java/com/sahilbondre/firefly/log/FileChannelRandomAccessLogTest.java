@@ -1,5 +1,7 @@
 package com.sahilbondre.firefly.log;
 
+import com.sahilbondre.firefly.filetable.FilePointer;
+import com.sahilbondre.firefly.model.Segment;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -120,5 +122,66 @@ class FileChannelRandomAccessLogTest {
         // Then
         assertTrue(Files.exists(TEST_FILE_PATH));
         assertThrows(IOException.class, () -> randomAccessLog.append("NewContent".getBytes()));
+    }
+
+    @Test
+    void givenLogWithContent_whenReadSegment_thenReturnsCorrectSegment() throws IOException, InvalidRangeException {
+        // Given
+        // A log with existing content
+        Segment firstSegment = Segment.fromKeyValuePair("Hello".getBytes(), "World".getBytes());
+        Segment secondSegment = Segment.fromKeyValuePair("Foo".getBytes(), "Bar".getBytes());
+        FilePointer firstFilePointer = randomAccessLog.append(firstSegment.getBytes());
+        FilePointer secondFilePointer = randomAccessLog.append(secondSegment.getBytes());
+
+        // When
+        Segment firstReadSegment = randomAccessLog.readSegment(firstFilePointer.getOffset());
+        Segment secondReadSegment = randomAccessLog.readSegment(secondFilePointer.getOffset());
+
+        // Then
+        assertArrayEquals(firstSegment.getBytes(), firstReadSegment.getBytes());
+        assertArrayEquals(secondSegment.getBytes(), secondReadSegment.getBytes());
+        assertEquals("Hello", new String(firstReadSegment.getKey()));
+        assertEquals("World", new String(firstReadSegment.getValue()));
+        assertEquals("Foo", new String(secondReadSegment.getKey()));
+        assertEquals("Bar", new String(secondReadSegment.getValue()));
+    }
+
+    @Test
+    void givenLogWithContent_whenReadSegmentWithInvalidOffset_thenThrowsInvalidRangeException() throws IOException {
+        // Given
+        // A log with existing content
+        Segment firstSegment = Segment.fromKeyValuePair("Hello".getBytes(), "World".getBytes());
+        Segment secondSegment = Segment.fromKeyValuePair("Foo".getBytes(), "Bar".getBytes());
+        randomAccessLog.append(firstSegment.getBytes());
+        randomAccessLog.append(secondSegment.getBytes());
+
+        // When/Then
+        assertThrows(InvalidRangeException.class, () -> randomAccessLog.readSegment(-1));
+        assertThrows(InvalidRangeException.class, () -> randomAccessLog.readSegment(100));
+    }
+
+    @Test
+    void givenEmptyLog_whenReadSegment_thenThrowsInvalidRangeException() {
+        // Given
+        // An empty log
+
+        // When/Then
+        assertThrows(InvalidRangeException.class, () -> randomAccessLog.readSegment(0));
+    }
+
+    @Test
+    void givenLogWithContent_whenAppend_thenReturnsCorrectFilePointer() throws IOException {
+        // Given
+        // A log with existing content
+
+        // When
+        FilePointer fp1 = randomAccessLog.append("Hello".getBytes());
+        FilePointer fp2 = randomAccessLog.append("World".getBytes());
+
+        // Then
+        assertEquals(TEST_FILE_NAME, fp1.getFileName());
+        assertEquals(0, fp1.getOffset());
+        assertEquals(TEST_FILE_NAME, fp2.getFileName());
+        assertEquals(5, fp2.getOffset());
     }
 }

@@ -2,9 +2,9 @@ package com.sahilbondre.firefly.model;
 
 public class Segment {
 
-    private static final int CRC_LENGTH = 2;
-    private static final int KEY_SIZE_LENGTH = 2;
-    private static final int VALUE_SIZE_LENGTH = 4;
+    public static final int CRC_LENGTH = 2;
+    public static final int KEY_SIZE_LENGTH = 2;
+    public static final int VALUE_SIZE_LENGTH = 4;
     /**
      * Class representing a segment of the log file.
      * <p>
