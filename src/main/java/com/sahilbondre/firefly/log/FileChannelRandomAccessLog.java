@@ -1,5 +1,7 @@
 package com.sahilbondre.firefly.log;
 
+import com.sahilbondre.firefly.filetable.FilePointer;
+
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -28,10 +30,11 @@ public class FileChannelRandomAccessLog implements RandomAccessLog {
     }
 
     @Override
-    public void append(byte[] message) throws IOException {
+    public FilePointer append(byte[] message) throws IOException {
         fileChannel.position(fileChannel.size());
         ByteBuffer buffer = ByteBuffer.wrap(message);
         fileChannel.write(buffer);
+        return new FilePointer(filePath, fileChannel.size() - message.length);
     }
 
     @Override

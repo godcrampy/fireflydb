@@ -1,5 +1,7 @@
 package com.sahilbondre.firefly.log;
 
+import com.sahilbondre.firefly.filetable.FilePointer;
+
 import java.io.IOException;
 
 public interface RandomAccessLog {
@@ -7,7 +9,7 @@ public interface RandomAccessLog {
 
     String getFilePath();
 
-    void append(byte[] message) throws IOException;
+    FilePointer append(byte[] message) throws IOException;
 
     byte[] read(long offset, long length) throws IOException, InvalidRangeException;
 
