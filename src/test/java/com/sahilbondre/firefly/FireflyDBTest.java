@@ -128,4 +128,68 @@ class FireflyDBTest {
         // Attempt to get a nonexistent key
         assertThrows(IllegalArgumentException.class, () -> fireflyDB.get(key));
     }
+
+    @Test
+    void givenStartedInstance_whenSetMultipleTimes_thenValuesAreCorrect() throws IOException {
+        // Given
+        fireflyDB.start();
+        assertTrue(fireflyDB.isStarted());
+
+        // Set a value
+        byte[] key = "testKey".getBytes();
+        byte[] value = "testValue".getBytes();
+        fireflyDB.set(key, value);
+
+        // Set another value
+        byte[] key2 = "testKey2".getBytes();
+        byte[] value2 = "testValue2".getBytes();
+        fireflyDB.set(key2, value2);
+
+        // Get the values
+        byte[] retrievedValue = fireflyDB.get(key);
+        byte[] retrievedValue2 = fireflyDB.get(key2);
+        assertArrayEquals(value, retrievedValue);
+        assertArrayEquals(value2, retrievedValue2);
+    }
+
+    @Test
+    void givenStartedInstance_whenSetSameKeyMultipleTimes_thenValueIsCorrect() throws IOException {
+        // Given
+        fireflyDB.start();
+        assertTrue(fireflyDB.isStarted());
+
+        // When
+        // Set a value
+        byte[] key = "testKey".getBytes();
+        byte[] value = "testValue".getBytes();
+        fireflyDB.set(key, value);
+
+        // Set another value
+        byte[] value2 = "testValue2".getBytes();
+        fireflyDB.set(key, value2);
+
+        // Get the values
+        byte[] retrievedValue = fireflyDB.get(key);
+        assertArrayEquals(value2, retrievedValue);
+    }
+
+    @Test
+    void givenStartedInstance_whenSetAndRestart_thenValueIsCorrect() throws IOException {
+        // Given
+        fireflyDB.start();
+        assertTrue(fireflyDB.isStarted());
+        byte[] key = "testKey".getBytes();
+        byte[] value = "testValue".getBytes();
+        fireflyDB.set(key, value);
+        fireflyDB.stop();
+
+        // When
+        // Restart the instance
+        fireflyDB = FireflyDB.getInstance(TEST_FOLDER);
+        fireflyDB.start();
+
+        // Get the values
+        byte[] retrievedValue = fireflyDB.get(key);
+        assertArrayEquals(value, retrievedValue);
+    }
 }
