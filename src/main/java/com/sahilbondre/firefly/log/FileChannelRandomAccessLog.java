@@ -7,17 +7,20 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 
 public class FileChannelRandomAccessLog implements RandomAccessLog {
 
     private final String filePath;
     private final RandomAccessFile randomAccessFile;
     private final FileChannel fileChannel;
+    private final FileLock fileLock;
 
     public FileChannelRandomAccessLog(String filePath) throws IOException {
         this.filePath = filePath;
         this.randomAccessFile = new RandomAccessFile(filePath, "rw");
         this.fileChannel = randomAccessFile.getChannel();
+        this.fileLock = fileChannel.lock();
     }
 
     @Override
@@ -93,6 +96,7 @@ public class FileChannelRandomAccessLog implements RandomAccessLog {
     }
 
     public void close() throws IOException {
+        fileLock.release();
         fileChannel.close();
         randomAccessFile.close();
     }
