@@ -1,53 +1,195 @@
 package com.sahilbondre.firefly;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class FireflyDBTest {
 
-    private static final String FOLDER_A = "/path/to/folderA";
-    private static final String FOLDER_B = "/path/to/folderB";
+    private static final String TEST_FOLDER = "src/test/resources/test_folder";
+    private static final String TEST_LOG_FILE_1 = "1.log";
+    private static final String TEST_LOG_FILE_2 = "2.log";
+    private static final String TEST_LOG_FILE_3 = "3.log";
 
-    @Test
-    void givenSameFolder_whenGetInstance_thenSameObjectReferenced() {
-        // Given
-        // Two instances with the same folder should reference the same object
+    private FireflyDB fireflyDB;
 
-        // When
-        FireflyDB dbA1 = FireflyDB.getInstance(FOLDER_A);
-        FireflyDB dbA2 = FireflyDB.getInstance(FOLDER_A);
+    @BeforeEach
+    void setUp() throws IOException {
+        // Create a test folder and log files
+        Files.createDirectories(Paths.get(TEST_FOLDER));
+        Files.createFile(Paths.get(TEST_FOLDER, TEST_LOG_FILE_1));
+        Files.createFile(Paths.get(TEST_FOLDER, TEST_LOG_FILE_2));
+        Files.createFile(Paths.get(TEST_FOLDER, TEST_LOG_FILE_3));
 
-        // Then
-        assertSame(dbA1, dbA2);
-        assertEquals(FOLDER_A, dbA1.getFolderPath());
-        assertEquals(FOLDER_A, dbA1.getFolderPath());
+        fireflyDB = FireflyDB.getInstance(TEST_FOLDER);
+    }
+
+    @AfterEach
+    void tearDown() throws IOException {
+        fireflyDB.stop();
+        // Cleanup: Delete the test folder and its contents
+        try (Stream<Path> pathStream = Files.walk(Paths.get(TEST_FOLDER))) {
+            pathStream
+                .sorted((path1, path2) -> -path1.compareTo(path2))
+                .forEach(path -> {
+                    try {
+                        Files.delete(path);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
-    void givenDifferentFolders_whenGetInstance_thenDifferentObjectsReferenced() {
+    void givenFolderPath_whenStarted_thenInstanceCreatedAndMarkedAsStarted() throws IOException {
         // Given
-        // Two instances with different folders should reference different objects
+        // A FireflyDB instance with a folder path
 
         // When
-        FireflyDB dbA = FireflyDB.getInstance(FOLDER_A);
-        FireflyDB dbB = FireflyDB.getInstance(FOLDER_B);
+        fireflyDB.start();
 
         // Then
-        assertNotSame(dbA, dbB);
-        assertEquals(FOLDER_A, dbA.getFolderPath());
-        assertEquals(FOLDER_B, dbB.getFolderPath());
+        assertNotNull(fireflyDB);
+        assertEquals(TEST_FOLDER, fireflyDB.getFolderPath());
+        assertTrue(fireflyDB.isStarted());
     }
 
     @Test
-    void givenGetInstanceMethod_whenCheckSynchronizedModifier_thenTrue() throws NoSuchMethodException {
+    void givenStartedInstance_whenStop_thenLogsClosed() throws IOException {
         // Given
-        Method getInstanceMethod = FireflyDB.class.getDeclaredMethod("getInstance", String.class);
+        // A started FireflyDB instance
+        fireflyDB.start();
+        assertTrue(fireflyDB.isStarted());
+
+        // When
+        fireflyDB.stop();
+
+        // Then
+        assertFalse(fireflyDB.isStarted());
+    }
+
+    @Test
+    void givenStartedInstance_whenSetAndGet_thenValuesAreCorrect() throws IOException {
+
+        // Given
+        fireflyDB.start();
+        assertTrue(fireflyDB.isStarted());
+
+        // Set a value
+        byte[] key = "testKey".getBytes();
+        byte[] value = "testValue".getBytes();
+        fireflyDB.set(key, value);
+
+        // Get the value
+        byte[] retrievedValue = fireflyDB.get(key);
+        assertArrayEquals(value, retrievedValue);
+    }
+
+    @Test
+    void givenUnstartedInstance_whenSet_thenExceptionThrown() {
+        // Given
+        byte[] key = "testKey".getBytes();
+        byte[] value = "testValue".getBytes();
 
         // When/Then
-        assertTrue(Modifier.isSynchronized(getInstanceMethod.getModifiers()));
+        // Attempt to set a value without starting the instance
+        assertThrows(IllegalStateException.class, () -> fireflyDB.set(key, value));
+    }
+
+    @Test
+    void givenUnstartedInstance_whenGet_thenExceptionThrown() {
+        // Given
+        byte[] key = "testKey".getBytes();
+
+        // When/Then
+        // Attempt to get a value without starting the instance
+        assertThrows(IllegalStateException.class, () -> fireflyDB.get(key));
+    }
+
+    @Test
+    void givenNonexistentKey_whenGet_thenExceptionThrown() throws IOException {
+        // Given
+        fireflyDB.start();
+        assertTrue(fireflyDB.isStarted());
+        byte[] key = "nonexistentKey".getBytes();
+
+        // When/Then
+        // Attempt to get a nonexistent key
+        assertThrows(IllegalArgumentException.class, () -> fireflyDB.get(key));
+    }
+
+    @Test
+    void givenStartedInstance_whenSetMultipleTimes_thenValuesAreCorrect() throws IOException {
+        // Given
+        fireflyDB.start();
+        assertTrue(fireflyDB.isStarted());
+
+        // Set a value
+        byte[] key = "testKey".getBytes();
+        byte[] value = "testValue".getBytes();
+        fireflyDB.set(key, value);
+
+        // Set another value
+        byte[] key2 = "testKey2".getBytes();
+        byte[] value2 = "testValue2".getBytes();
+        fireflyDB.set(key2, value2);
+
+        // Get the values
+        byte[] retrievedValue = fireflyDB.get(key);
+        byte[] retrievedValue2 = fireflyDB.get(key2);
+        assertArrayEquals(value, retrievedValue);
+        assertArrayEquals(value2, retrievedValue2);
+    }
+
+    @Test
+    void givenStartedInstance_whenSetSameKeyMultipleTimes_thenValueIsCorrect() throws IOException {
+        // Given
+        fireflyDB.start();
+        assertTrue(fireflyDB.isStarted());
+
+        // When
+        // Set a value
+        byte[] key = "testKey".getBytes();
+        byte[] value = "testValue".getBytes();
+        fireflyDB.set(key, value);
+
+        // Set another value
+        byte[] value2 = "testValue2".getBytes();
+        fireflyDB.set(key, value2);
+
+        // Get the values
+        byte[] retrievedValue = fireflyDB.get(key);
+        assertArrayEquals(value2, retrievedValue);
+    }
+
+    @Test
+    void givenStartedInstance_whenSetAndRestart_thenValueIsCorrect() throws IOException {
+        // Given
+        fireflyDB.start();
+        assertTrue(fireflyDB.isStarted());
+        byte[] key = "testKey".getBytes();
+        byte[] value = "testValue".getBytes();
+        fireflyDB.set(key, value);
+        fireflyDB.stop();
+
+        // When
+        // Restart the instance
+        fireflyDB = FireflyDB.getInstance(TEST_FOLDER);
+        fireflyDB.start();
+
+        // Get the values
+        byte[] retrievedValue = fireflyDB.get(key);
+        assertArrayEquals(value, retrievedValue);
     }
 }

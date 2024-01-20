@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.nio.channels.ClosedChannelException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -28,7 +29,11 @@ class FileChannelRandomAccessLogTest {
 
     @AfterEach
     void tearDown() throws IOException {
-        randomAccessLog.close();
+        try {
+            randomAccessLog.close();
+        } catch (ClosedChannelException e) {
+            // Ignore
+        }
         Files.deleteIfExists(TEST_FILE_PATH);
     }
 
