@@ -55,25 +55,33 @@ public class FireflyDB {
             } else {
                 this.fileTable = SerializedPersistableFileTable.fromEmpty();
             }
+
             // Find all files ending with .log
             Files.walkFileTree(Paths.get(folderPath), new SimpleFileVisitor<>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 
                     String fileName = file.getFileName().toString();
-                    String fileNameWithoutExtension = fileName.substring(0, fileName.length() - 4);
-                    if (fileName.endsWith(".log") && isNumeric(fileNameWithoutExtension)) {
-                        // Create a RandomAccessLog for each file
-                        RandomAccessLog log = new FileChannelRandomAccessLog(file.toString());
-                        // Add it to the logMap
-                        logMap.put(Integer.parseInt(fileNameWithoutExtension), log);
+                    if (fileName.endsWith(".log")) {
+                        String fileNameWithoutExtension = fileName.substring(0, fileName.length() - 4);
+                        if (isNumeric(fileNameWithoutExtension)) {
+                            // Create a RandomAccessLog for each file
+                            RandomAccessLog log = new FileChannelRandomAccessLog(file.toString());
+                            // Add it to the logMap
+                            logMap.put(Integer.parseInt(fileNameWithoutExtension), log);
+                        }
                     }
                     return FileVisitResult.CONTINUE;
                 }
             });
 
-            // File with largest number is the active log
+            // File with the largest number is the active log
             int max = logMap.keySet().stream().max(Integer::compareTo).orElse(0);
+
+            if (!logMap.containsKey(max)) {
+                logMap.put(max, new FileChannelRandomAccessLog(folderPath + "/" + max + ".log"));
+            }
+
             activeLog = logMap.get(max);
 
             // handle the case when there are no logs
