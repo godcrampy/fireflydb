@@ -10,11 +10,14 @@ import com.sahilbondre.firefly.model.Segment;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class FireflyDB {
     private static final Map<String, FireflyDB> instances = new HashMap<>();
+    private static final String NOT_STARTED_ERROR_MESSAGE = "FireflyDB is not started.";
     private final String folderPath;
 
     private final String fileTablePath;
@@ -104,7 +107,7 @@ public class FireflyDB {
 
     public synchronized void set(byte[] key, byte[] value) throws IOException {
         if (!isStarted) {
-            throw new IllegalStateException("FireflyDB is not started.");
+            throw new IllegalStateException(NOT_STARTED_ERROR_MESSAGE);
         }
 
         // Append to active log
@@ -115,7 +118,7 @@ public class FireflyDB {
 
     public byte[] get(byte[] key) throws IOException {
         if (!isStarted) {
-            throw new IllegalStateException("FireflyDB is not started.");
+            throw new IllegalStateException(NOT_STARTED_ERROR_MESSAGE);
         }
 
         // Get file-pointer from file-table
@@ -127,5 +130,85 @@ public class FireflyDB {
         // Read from log
         Segment segment = activeLog.readSegment(filePointer.getOffset());
         return segment.getValue();
+    }
+
+    public synchronized void compaction() throws IOException {
+        if (!isStarted) {
+            throw new IllegalStateException(NOT_STARTED_ERROR_MESSAGE);
+        }
+
+        // close logmap
+        for (RandomAccessLog log : logMap.values()) {
+            log.close();
+        }
+
+        // Iterate over all log files in descending order
+        List<RandomAccessLog> logs = new ArrayList<>();
+        Files.walkFileTree(Paths.get(folderPath), new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+
+                String fileName = file.getFileName().toString();
+                if (fileName.endsWith(".log")) {
+                    String fileNameWithoutExtension = fileName.substring(0, fileName.length() - 4);
+                    if (isNumeric(fileNameWithoutExtension)) {
+                        // Create a RandomAccessLog for each file
+                        RandomAccessLog log = new FileChannelRandomAccessLog(file.toString());
+                        // Add it to the logMap
+                        logs.add(log);
+                    }
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+        this.fileTable = SerializedPersistableFileTable.fromEmpty();
+
+        // Sort the logs in descending order
+        logs.sort((o1, o2) -> {
+            int o1Id = Integer.parseInt(o1.getFilePath().substring(o1.getFilePath().lastIndexOf("/") + 1, o1.getFilePath().length() - 4));
+            int o2Id = Integer.parseInt(o2.getFilePath().substring(o2.getFilePath().lastIndexOf("/") + 1, o2.getFilePath().length() - 4));
+            return Integer.compare(o2Id, o1Id);
+        });
+
+        // Create a new log
+        // TODO: Assumption: There is at least one log file. Add logic to handle the case when there are no logs
+        int largestLogId = Integer
+            .parseInt(logs.get(0).getFilePath().substring(logs.get(0).getFilePath().lastIndexOf("/") + 1,
+                logs.get(0).getFilePath().length() - 4)) + 1;
+
+        RandomAccessLog newLog = new FileChannelRandomAccessLog(folderPath + "/" + largestLogId + ".log");
+        // Iterate over all logs
+        for (RandomAccessLog log : logs) {
+            // Iterate over all segments in the log
+            long offset = 0;
+
+            while (offset < log.size()) {
+                Segment segment = log.readSegment(offset);
+                offset += segment.getBytes().length;
+                // Append only if the key is not seen before
+                if (fileTable.get(segment.getKey()) != null) {
+                    continue;
+                }
+                // Append to new log
+                FilePointer filePointer = newLog.append(segment.getBytes());
+                fileTable.put(segment.getKey(), filePointer);
+            }
+
+            // close log
+            log.close();
+            // rename all stale logs and add underscore before file name
+            Path oldPath = Paths.get(log.getFilePath());
+            Path dir = oldPath.getParent();
+            Path newPath = Paths.get(dir.toString(), "_" + oldPath.getFileName().toString());
+            Files.move(oldPath, newPath, StandardCopyOption.REPLACE_EXISTING);
+        }
+
+        // update logmap
+        logMap.clear();
+        logMap.put(largestLogId, newLog);
+
+        // save file-table
+        fileTable.saveToDisk(fileTablePath);
     }
 }

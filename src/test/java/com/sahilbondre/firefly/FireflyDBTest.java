@@ -6,15 +6,14 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.stream.Stream;
 
+import static com.sahilbondre.firefly.TestUtils.deleteFolderAndFilesIfExists;
 import static org.junit.jupiter.api.Assertions.*;
 
 class FireflyDBTest {
 
-    private static final String TEST_FOLDER = "src/test/resources/test_folder";
+    private static final String TEST_FOLDER = "src/test/resources/test_folder_simple";
     private static final String TEST_LOG_FILE_1 = "1.log";
     private static final String TEST_LOG_FILE_2 = "2.log";
     private static final String TEST_LOG_FILE_3 = "3.log";
@@ -23,6 +22,7 @@ class FireflyDBTest {
 
     @BeforeEach
     void setUp() throws IOException {
+        deleteFolderAndFilesIfExists(TEST_FOLDER);
         // Create a test folder and log files
         Files.createDirectories(Paths.get(TEST_FOLDER));
         Files.createFile(Paths.get(TEST_FOLDER, TEST_LOG_FILE_1));
@@ -35,20 +35,6 @@ class FireflyDBTest {
     @AfterEach
     void tearDown() throws IOException {
         fireflyDB.stop();
-        // Cleanup: Delete the test folder and its contents
-        try (Stream<Path> pathStream = Files.walk(Paths.get(TEST_FOLDER))) {
-            pathStream
-                .sorted((path1, path2) -> -path1.compareTo(path2))
-                .forEach(path -> {
-                    try {
-                        Files.delete(path);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     @Test
