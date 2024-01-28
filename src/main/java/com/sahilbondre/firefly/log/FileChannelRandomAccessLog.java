@@ -8,6 +8,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.file.Paths;
 
 public class FileChannelRandomAccessLog implements RandomAccessLog {
 
@@ -89,6 +90,12 @@ public class FileChannelRandomAccessLog implements RandomAccessLog {
         }
 
         return segment;
+    }
+
+    @Override
+    public Integer getLogId() {
+        String fileNameWithoutPath = Paths.get(filePath).getFileName().toString();
+        return Integer.parseInt(fileNameWithoutPath.substring(0, fileNameWithoutPath.length() - 4));
     }
 
     private int byteArrayToInt(byte[] bytes) {

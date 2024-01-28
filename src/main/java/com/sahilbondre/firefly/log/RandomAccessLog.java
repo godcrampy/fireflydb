@@ -17,4 +17,6 @@ public interface RandomAccessLog {
     Segment readSegment(long offset) throws IOException, InvalidRangeException;
 
     void close() throws IOException;
+
+    Integer getLogId();
 }
