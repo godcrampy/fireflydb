@@ -30,6 +30,9 @@ public class SerializedPersistableFileTable implements PersistableFileTable, Ser
     }
 
     public static SerializedPersistableFileTable fromFile(String filePath) throws FileNotFoundException, KryoException {
+        kryo.register(SerializedPersistableFileTable.class);
+        kryo.register(HashMap.class);
+        kryo.register(FilePointer.class);
         try (Input input = new Input(new FileInputStream(filePath))) {
             return kryo.readObject(input, SerializedPersistableFileTable.class);
         } catch (KryoException e) {
