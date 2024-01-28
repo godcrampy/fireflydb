@@ -128,7 +128,10 @@ public class FireflyDB {
         }
 
         // Read from log
-        Segment segment = activeLog.readSegment(filePointer.getOffset());
+        String filename = Paths.get(filePointer.getFileName()).getFileName().toString();
+        Integer logId = Integer.parseInt(filename.substring(0, filename.length() - 4));
+        RandomAccessLog log = logMap.get(logId);
+        Segment segment = log.readSegment(filePointer.getOffset());
         return segment.getValue();
     }
 

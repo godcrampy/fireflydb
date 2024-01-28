@@ -7,7 +7,7 @@ import java.nio.file.Paths;
 import java.util.stream.Stream;
 
 public class TestUtils {
-    public static void deleteFolderAndFilesIfExists(String folderPath) throws IOException {
+    public static void deleteFolderContentsIfExists(String folderPath) throws IOException {
         // check if folder exists
         Path path = Paths.get(folderPath);
         if (Files.exists(path)) {

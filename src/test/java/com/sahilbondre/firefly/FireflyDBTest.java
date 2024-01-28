@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import static com.sahilbondre.firefly.TestUtils.deleteFolderAndFilesIfExists;
+import static com.sahilbondre.firefly.TestUtils.deleteFolderContentsIfExists;
 import static org.junit.jupiter.api.Assertions.*;
 
 class FireflyDBTest {
@@ -22,7 +22,7 @@ class FireflyDBTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        deleteFolderAndFilesIfExists(TEST_FOLDER);
+        deleteFolderContentsIfExists(TEST_FOLDER);
         // Create a test folder and log files
         Files.createDirectories(Paths.get(TEST_FOLDER));
         Files.createFile(Paths.get(TEST_FOLDER, TEST_LOG_FILE_1));
@@ -35,6 +35,7 @@ class FireflyDBTest {
     @AfterEach
     void tearDown() throws IOException {
         fireflyDB.stop();
+        deleteFolderContentsIfExists(TEST_FOLDER);
     }
 
     @Test
