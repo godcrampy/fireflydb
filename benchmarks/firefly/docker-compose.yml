@@ -1,0 +1,9 @@
+version: '3'
+services:
+  fireflydb-benchmark-bitcask:
+    image: fireflydb-benchmark-firefly
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: '1G'
