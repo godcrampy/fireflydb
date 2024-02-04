@@ -71,6 +71,8 @@ value-size: 100 bytes
 
 Test: Generate a random key and value and write it to the database.
 
+![write-test](./docs/write-test.png)
+
 | Database  | Avg Time (microseconds) | P90 Latency (microseconds) |
 |-----------|-------------------------|----------------------------|
 | In-Memory | 0.53                    | 1                          |
@@ -79,9 +81,11 @@ Test: Generate a random key and value and write it to the database.
 | RocksDB   | 568.60                  | 872                        |
 | FireflyDB | 7.10                    | 5                          |
 
-### Random Reads Test
+### Random Read Test
 
 Test: Pick a random key from the ones written in the previous test and read it from the database.
+
+![read-test](./docs/read-test.png)
 
 | Database  | Avg Time (microseconds) | P90 Latency (microseconds) |
 |-----------|-------------------------|----------------------------|
@@ -94,6 +98,8 @@ Test: Pick a random key from the ones written in the previous test and read it f
 ### Alternating Read-Write Test
 
 Test: Perform a read and write operation alternately.
+
+![alternating-read-write-test](./docs/rw-test.png)
 
 | Database          | Avg Time (microseconds) | P90 Latency (microseconds) |
 |-------------------|-------------------------|----------------------------|
@@ -110,16 +116,11 @@ Test: Perform a read and write operation alternately.
 
 ## Potential Improvements
 
-- [ ] 
-    - Add an explicit delete operation.
-- [ ] 
-    - Expose compaction size as a configuration option.
-- [ ] 
-    - Expose compaction interval as a configuration option.
-- [ ] 
-    - Allow larger key size as a configuration option.
-- [ ] 
-    - Expose read only mode.
+- [ ] Add an explicit delete operation.
+- [ ] Expose compaction size as a configuration option.
+- [ ] Expose compaction interval as a configuration option.
+- [ ] Allow larger key size as a configuration option.
+- [ ] Expose read only mode.
 
 ## Contributing
 
