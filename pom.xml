@@ -6,10 +6,10 @@
 
     <groupId>com.sahilbondre</groupId>
     <artifactId>fireflydb</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
 
     <name>${project.artifactId}</name>
-    <description>A fast hash-based key-value storage engine with microsecond latency.</description>
+    <description>FireflyDB is a fast, thread-safe, JVM-based key-value storage engine with microsecond latency.</description>
     <url>https://github.com/godcrampy/fireflydb</url>
 
     <licenses>

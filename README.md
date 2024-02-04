@@ -25,14 +25,14 @@ educated tradeoffs to achieve high performance:
 <dependency>
     <groupId>com.sahilbondre</groupId>
     <artifactId>fireflydb</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
 </dependency>
 ```
 
 ### Gradle
 
 ```gradle
-implementation 'com.sahilbondre:fireflydb:0.1.0'
+implementation 'com.sahilbondre:fireflydb:0.1.1'
 ```
 
 ## API
